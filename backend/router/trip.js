@@ -14,3 +14,5 @@ router.post("/signUp", (req, res) => {});
 // edit a trip
 
 // delete a trip
+
+export default router;

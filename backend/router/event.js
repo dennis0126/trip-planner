@@ -14,3 +14,5 @@ router.post("/signUp", (req, res) => {});
 // edit a event
 
 // delete a event
+
+export default router;
