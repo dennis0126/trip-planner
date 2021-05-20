@@ -1,7 +1,8 @@
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 import "regenerator-runtime/runtime";
-// import {} from "../service/user";
 import { userOneId, userOne, setupDatabase } from "./fixtures/db.js";
 import User from "../database/model/user.js";
 import app from "../app.js";
@@ -107,30 +108,68 @@ test("Should not login if provided incorrect credentials", async () => {
     .expect(400);
 });
 
-// test("Should get user with credentials", () => {
-//   expect();
-// });
+// logout
+test("Should logout", async () => {
+  await request(app)
+    .post(`${userRoutePath}/logout`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send()
+    .expect(200);
 
-// test("Should verify password", () => {
-//   expect();
-// });
+  // Assert the token is removed
+  const user = await User.findById(userOneId);
+  expect(user.tokens).not.toEqual(
+    expect.objectContaining({
+      _id: expect.any(mongoose.Schema.Types.ObjectId),
+      token: userOne.tokens[0].token,
+    })
+  );
+});
 
-// test("Should generate token if credentials are verified", () => {
-//   expect();
-// });
+// profile
 
-// test("Should get user with token", () => {
-//   expect();
-// });
+test("Should obtain user profile", async () => {
+  const response = await request(app)
+    .get(`${userRoutePath}/profile`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send()
+    .expect(200);
 
-// test("Should remove token", () => {
-//   expect();
-// });
+  const userOneObj = { ...userOne };
+  userOneObj._id = userOneObj._id.toString();
+  delete userOneObj.password;
+  delete userOneObj.tokens;
 
-// test("Should update user info", () => {
-//   expect();
-// });
+  expect(response.body).toMatchObject(userOneObj);
+});
 
-// test("Should update user password", () => {
-//   expect();
-// });
+// update profile
+
+test("Should update user profile", async () => {
+  const response = await request(app)
+    .patch(`${userRoutePath}/profile`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send({
+      name: "Michael",
+      password: "abc1234",
+    })
+    .expect(200);
+
+  // Assert user info is updated in database
+  const user = await User.findOne({ _id: userOneId });
+  expect(user.name).toBe("Michael");
+  const isPasswordMatched = await bcrypt.compare("abc1234", user.password);
+  expect(isPasswordMatched).toBe(true);
+});
+
+test("Should not update user profile if provided invalid field names", async () => {
+  await request(app)
+    .patch(`${userRoutePath}/profile`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send({
+      name: "Michael",
+      password: "abc1234",
+      extraField: 256,
+    })
+    .expect(400);
+});

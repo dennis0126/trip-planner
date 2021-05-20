@@ -25,7 +25,7 @@ export const loginUser = async (userData) => {
 
 export const getUserByToken = async (token) => {
   const decoded = verifyToken(token); // throw an error if not valid
-  const user = await getUser({ _id: decoded._id });
+  const user = await getUser({ _id: decoded._id, "tokens.token": token });
   return user;
 };
 
@@ -48,5 +48,5 @@ export const verifyToken = (token) => {
 };
 
 export const logoutUser = async (user, token) => {
-  await user.removeToken(token);
+  return await user.removeToken(token);
 };

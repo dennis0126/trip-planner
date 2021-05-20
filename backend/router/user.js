@@ -42,9 +42,13 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// logout
 router.post("/logout", auth, async (req, res) => {
   try {
     await logoutUser(req.user, req.token);
+    res.send({
+      message: "Logout successfully",
+    });
   } catch (e) {
     res.status(500).send({
       message: "Failed to logout",
@@ -55,6 +59,30 @@ router.post("/logout", auth, async (req, res) => {
 // profile
 router.get("/profile", auth, (req, res) => {
   res.send(req.user);
+});
+
+// update profile
+router.patch("/profile", auth, async (req, res) => {
+  const updateFields = Object.keys(req.body);
+  const allowedUpdateFields = ["name", "password"];
+  const isValidOperation = updateFields.every((field) =>
+    allowedUpdateFields.includes(field)
+  );
+
+  if (!isValidOperation) {
+    res.status(400).send({
+      message: "Failed to update profile",
+      error: "Invalid update",
+    });
+  }
+
+  try {
+    updateFields.forEach((field) => (req.user[field] = req.body[field]));
+    await req.user.save();
+    res.send(req.user);
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 export default router;

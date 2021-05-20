@@ -56,11 +56,11 @@ userSchema.methods.generateAuthToken = async function () {
 
 userSchema.methods.removeToken = async function (token) {
   const user = this;
-  return await user.update({
-    $pull: {
-      tokens: { token },
-    },
+  user.tokens = user.tokens.filter((tokenObj) => {
+    return tokenObj.token !== token;
   });
+
+  return await user.save();
 };
 
 userSchema.statics.findByToken = function (token) {
