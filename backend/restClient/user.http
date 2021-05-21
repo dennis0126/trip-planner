@@ -1,6 +1,6 @@
 @url = http://localhost:3000/api/v1
 
-@currentToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MDllNDhiMDdhZGRlODA0N2FjNWFmODkiLCJpYXQiOjE2MjEzMzU4Njl9.xB9BgIouuCZkrRq3OsCsgydkiFy-GVBt--mX4RCxmew
+@currentToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MDllNDhiMDdhZGRlODA0N2FjNWFmODkiLCJpYXQiOjE2MjE0OTgyMjl9.kNHJTcxBxcpJamEcQTqqf_H83TD32X4ldpZX5vK4VQQ
 
 POST {{url}}/user/signUp
 content-type: application/json
@@ -24,9 +24,19 @@ content-type: application/json
 GET {{url}}/user/profile
 Authorization: Bearer {{currentToken}}
 
+###
+PATCH {{url}}/user/profile
+Authorization: Bearer {{currentToken}}
+content-type: application/json
+
+{
+    "name": "Smith"
+}
+ 
 
 ###
 POST {{url}}/user/logout
 Authorization: Bearer {{currentToken}}
 
+###
 

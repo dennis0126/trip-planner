@@ -29,6 +29,30 @@ export const getUserByToken = async (token) => {
   return user;
 };
 
+export const verifyToken = (token) => {
+  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+};
+
+export const logoutUser = async (user, token) => {
+  return await user.removeToken(token);
+};
+
+export const updateUser = async (user, updates) => {
+  const updateFields = Object.keys(updates);
+  const allowedUpdateFields = ["name", "password"];
+  const isValidOperation = updateFields.every((field) =>
+    allowedUpdateFields.includes(field)
+  );
+
+  if (!isValidOperation) {
+    throw new Error("Invalid update");
+  }
+
+  updateFields.forEach((field) => (user[field] = updates[field]));
+  await user.save();
+  return user;
+};
+
 const getUser = async (criteria) => {
   const user = await User.findOne(criteria);
   return user;
@@ -41,12 +65,4 @@ const verifyPassword = async (hashedPassword, password) => {
 const generateToken = async (user) => {
   const token = await user.generateAuthToken();
   return token;
-};
-
-export const verifyToken = (token) => {
-  return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-};
-
-export const logoutUser = async (user, token) => {
-  return await user.removeToken(token);
 };

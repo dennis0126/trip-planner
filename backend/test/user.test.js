@@ -140,7 +140,7 @@ test("Should obtain user profile", async () => {
   delete userOneObj.password;
   delete userOneObj.tokens;
 
-  expect(response.body).toMatchObject(userOneObj);
+  expect(response.body.user).toMatchObject(userOneObj);
 });
 
 // update profile
