@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import Event from "./event.js";
 
 const tripSchema = new mongoose.Schema(
   {
@@ -50,6 +51,19 @@ tripSchema.methods.toJSON = function () {
 
   return tripObject;
 };
+
+tripSchema.pre("save", async function (next) {
+  const trip = this;
+
+  // synchronize the owners of the events
+  if (trip.isModified("owners")) {
+    const events = await Event.find({ trip: trip._id });
+    events.forEach((event) => {
+      event.owners = trip.owners;
+      event.save();
+    });
+  }
+});
 
 const Trip = mongoose.model("Trip", tripSchema);
 

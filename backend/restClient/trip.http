@@ -2,14 +2,38 @@
 
 @currentToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MDllNDhiMDdhZGRlODA0N2FjNWFmODkiLCJpYXQiOjE2MjE0OTgyMjl9.kNHJTcxBxcpJamEcQTqqf_H83TD32X4ldpZX5vK4VQQ
 
+
+###
+GET {{url}}/trip/getAllTrips
+Authorization: Bearer {{currentToken}}
+
+###
 POST {{url}}/trip/createTrip
 Authorization: Bearer {{currentToken}}
 content-type: application/json
 
+
 {
     "name": "Bangkok202109",
     "startDate": "2021-05-20T00:00:00.000Z",
-    "endDate": "2021-03-20T00:00:00.000Z",
+    "endDate": "2021-05-20T00:00:00.000Z"
 }
 
-###
+### get trip
+GET {{url}}/trip/60a6406bce5c291b8a3da998
+Authorization: Bearer {{currentToken}}
+
+
+### update trip
+PATCH {{url}}/trip/60a6406bce5c291b8a3da998
+Authorization: Bearer {{currentToken}}
+content-type: application/json
+
+{
+    "name": "Bangkok 2021"
+}
+
+
+### delete trip
+DELETE {{url}}/trip/60a6406bce5c291b8a3da998
+Authorization: Bearer {{currentToken}}

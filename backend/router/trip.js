@@ -6,6 +6,7 @@ import {
   getTrip,
   updateTrip,
   deleteTrip,
+  getEventsInTrip,
 } from "../service/trip.js";
 
 const router = new express.Router();
@@ -26,9 +27,11 @@ router.get("/getAllTrips", auth, async (req, res) => {
 });
 
 // create a trip
-router.post("/createTrip", auth, async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
-    const trip = await createTrip(req.user._id, req.body);
+    const userId = req.user._id;
+    const tripData = req.body;
+    const trip = await createTrip(userId, tripData);
     res.status(201).send({
       message: "Create trip successfully",
       trip,
@@ -44,14 +47,16 @@ router.post("/createTrip", auth, async (req, res) => {
 // get a trip
 router.get("/:id", auth, async (req, res) => {
   try {
-    const trip = await getTrip(req.user._id, req.params.id);
+    const userId = req.user._id;
+    const tripId = req.params.id;
+    const trip = await getTrip(userId, tripId);
     if (trip) {
       return res.send({
         trip,
       });
     } else {
       return res
-        .status(400)
+        .status(404)
         .send({ message: "Failed to get trip", error: "Trip does not exist" });
     }
   } catch (e) {
@@ -65,9 +70,20 @@ router.get("/:id", auth, async (req, res) => {
 // edit a trip
 router.patch("/:id", auth, async (req, res) => {
   try {
-    const trip = await updateTrip(req.user._id, req.params.id, req.body);
+    const userId = req.user._id;
+    const tripId = req.params.id;
+    const updates = req.body;
+    const trip = await getTrip(userId, tripId);
+    if (!trip) {
+      return res.status(404).send({
+        message: "Failed to update trip",
+        error: "Trip does not exist",
+      });
+    }
+
+    const newTrip = await updateTrip(trip, updates);
     res.send({
-      trip,
+      trip: newTrip,
     });
   } catch (e) {
     res.status(400).send({
@@ -80,13 +96,37 @@ router.patch("/:id", auth, async (req, res) => {
 // delete a trip
 router.delete("/:id", auth, async (req, res) => {
   try {
-    await deleteTrip(req.user._id, req.params.id);
+    const userId = req.user._id;
+    const tripId = req.params.id;
+    const trip = await getTrip(userId, tripId);
+    if (!trip) {
+      return res.send(404).send({
+        message: "Failed to update trip",
+        error: "Trip does not exist",
+      });
+    }
+
+    await deleteTrip(trip);
     res.send({
       message: "Delete trip successfully",
     });
   } catch (e) {
     res.status(500).send({
       message: "Failed to delete trip",
+      error: e,
+    });
+  }
+});
+
+router.get("/:id/getEvents", auth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const tripId = req.params.id;
+    const events = await getEventsInTrip(userId, req.params.id);
+    res.send({ events });
+  } catch (e) {
+    res.status(400).send({
+      message: "Failed to get events",
       error: e,
     });
   }

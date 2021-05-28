@@ -9,6 +9,7 @@ import {
   setupDatabase,
 } from "./fixtures/db.js";
 import Trip from "../database/model/trip.js";
+import Event from "../database/model/event.js";
 import app from "../app.js";
 
 beforeEach(setupDatabase);
@@ -37,7 +38,7 @@ test("Should create a new Trip", async () => {
   };
 
   const response = await request(app)
-    .post(`${tripRoutePath}/createTrip`)
+    .post(`${tripRoutePath}/`)
     .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
     .send(tripInfo)
     .expect(201);
@@ -65,7 +66,7 @@ test("Should not create a new trip if end date is before start date", async () =
   };
 
   const response = await request(app)
-    .post(`${tripRoutePath}/createTrip`)
+    .post(`${tripRoutePath}/`)
     .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
     .send(tripInfo)
     .expect(400);
@@ -86,15 +87,15 @@ test("Should not get a trip if user is not the owner", async () => {
     .get(`${tripRoutePath}/${tripOne._id}`)
     .set("Authorization", `Bearer ${userTwo.tokens[0].token}`)
     .send()
-    .expect(400);
+    .expect(404);
 });
 
-test("Should not get a trip is the trip is deleted", async () => {
+test("Should not get a trip if the trip is deleted", async () => {
   await request(app)
     .get(`${tripRoutePath}/${tripTwo._id}`)
     .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
     .send()
-    .expect(400);
+    .expect(404);
 });
 
 // update a trip
@@ -114,6 +115,20 @@ test("Should update a trip", async () => {
 
   const trip = await Trip.findOne({ _id: tripOne._id });
   expect(trip).toMatchObject(update);
+});
+
+test("Should not update a trip if trip does not belong to user", async () => {
+  const update = {
+    name: "Tokyo2021 update",
+    startDate: new Date("2021-06-16"),
+    endDate: new Date("2021-06-20"),
+  };
+
+  await request(app)
+    .patch(`${tripRoutePath}/${tripOne._id}`)
+    .set("Authorization", `Bearer ${userTwo.tokens[0].token}`)
+    .send(update)
+    .expect(404);
 });
 
 test("Should not update a trip if provided invalid updates", async () => {
@@ -145,6 +160,23 @@ test("Should not update a trip if end date is before start date", async () => {
     .expect(400);
 });
 
+test("Should update owners of trip together with the child events", async () => {
+  const update = {
+    owners: [userOne._id, userTwo._id],
+  };
+
+  await request(app)
+    .patch(`${tripRoutePath}/${tripOne._id}`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send(update)
+    .expect(200);
+
+  const events = await Event.find({ trip: tripOne._id });
+  events.forEach((event) => {
+    expect([...event.owners]).toEqual(update.owners);
+  });
+});
+
 // delete trip
 
 test("Should delete a trip", async () => {
@@ -156,4 +188,15 @@ test("Should delete a trip", async () => {
 
   const trip = await Trip.findOne({ _id: tripOne._id });
   expect(trip.isDeleted).toBe(true);
+});
+
+// get events in trip
+
+test("Should get events in a trip", async () => {
+  const response = await request(app)
+    .get(`${tripRoutePath}/${tripOne._id}/getEvents`)
+    .set("Authorization", `Bearer ${userOne.tokens[0].token}`)
+    .send()
+    .expect(200);
+  expect(response.body.events.length).toBe(2);
 });

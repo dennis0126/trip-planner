@@ -1,12 +1,13 @@
 import Trip from "../database/model/trip.js";
+import Event from "../database/model/event.js";
 
 export const getAllTrips = async (userId) => {
   const trips = await Trip.find({ owners: userId, isDeleted: false });
   return trips;
 };
 
-export const createTrip = async (userId, tripInfo) => {
-  const trip = new Trip(tripInfo);
+export const createTrip = async (userId, tripData) => {
+  const trip = new Trip(tripData);
   trip.creator = userId;
   trip.owners = [userId];
   await trip.save();
@@ -22,14 +23,9 @@ export const getTrip = async (userId, tripId) => {
   return trip;
 };
 
-export const updateTrip = async (userId, tripId, updates) => {
-  const trip = await getTrip(userId, tripId);
-  if (!trip) {
-    throw new Error("Trip does not exist");
-  }
-
+export const updateTrip = async (trip, updates) => {
   const updateFields = Object.keys(updates);
-  const allowedUpdateFields = ["name", "startDate", "endDate"];
+  const allowedUpdateFields = ["name", "startDate", "endDate", "owners"];
   const isValidOperation = updateFields.every((field) =>
     allowedUpdateFields.includes(field)
   );
@@ -43,13 +39,24 @@ export const updateTrip = async (userId, tripId, updates) => {
   return trip;
 };
 
-export const deleteTrip = async (userId, tripId) => {
-  const trip = await getTrip(userId, tripId);
-
-  if (!trip) {
-    throw new Error("Trip does not exist");
-  }
-
+export const deleteTrip = async (trip) => {
   trip.isDeleted = true;
   await trip.save();
+};
+
+export const getEventsInTrip = async (userId, tripId) => {
+  const trip = await Trip.findOne({
+    _id: tripId,
+    owners: userId,
+    isDeleted: false,
+  });
+  if (!trip) {
+    throw new Error("Trip not found");
+  }
+  const events = await Event.find({
+    trip: tripId,
+    owners: userId,
+    isDeleted: false,
+  });
+  return events;
 };
